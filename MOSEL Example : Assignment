@@ -1,0 +1,87 @@
+(!*********************************************************************
+   Mosel Example Problems
+   ====================== 
+
+   file assignment.mos
+   ```````````````````
+   TYPE:         Assignment problem
+   DIFFICULTY:   1
+   FEATURES:     simple LP problem, graphical representation of results
+   DESCRIPTION:  A set of projects is assigned to persons with the
+                 objective to maximize the overall satisfaction.
+                 A preference rating per person and project is given.
+                 In this model formulation the solution to the LP problem 
+                 is integer, there is no need to define the decision 
+                 variables explicitly as binaries.
+   FURTHER INFO: Similar problems: 
+                 `Applications of optimization with Xpress-MP', 
+                 Section 11.1 `Flight connections at a hub',
+                 Section 14.1 `Assigning personnel to machines'
+                 Section 8.6 `Assignment of production batches to machines'
+   
+   (c) 2008 Fair Isaac Corporation 
+       author: S. Heipcke, Feb. 2004, rev. Sep. 2017
+**********************************************************************!)
+
+model Assignment
+ uses "mmxprs", "mmsvg"
+
+ declarations
+  NP = 5                                ! Number of persons/projects
+  RP = 1..NP                            ! Set (range) of persons/projects
+  PREF: array(RP,RP) of integer         ! Preference values
+   
+  assign: array(RP,RP) of mpvar         ! Assignment person-project
+ end-declarations
+ 
+ PREF:: [1, 2, 3, 5, 4,
+         3, 2, 5, 4, 1,
+         3, 4, 1, 5, 2,
+         4, 3, 2, 5, 1,
+         2, 3, 5, 4, 1]
+
+! Objective function: maximize satisfaction
+ Satisfaction:= sum(m,p in RP) PREF(m,p)*assign(m,p)
+                                  
+! One person per project
+ forall(p in RP) OnePersProj(p):= sum(m in RP) assign(m,p)=1
+  
+! One project per person
+ forall(m in RP) OneProjPers(m):= sum(p in RP) assign(m,p)=1
+ 
+! Solve the problem
+ maximize(Satisfaction)
+  
+! Solution printing
+ writeln("Total satisfaction score: ", getobjval)
+ forall(m in RP) 
+  writeln("Person ", m, ": project ", getsol(sum(p in RP) p*assign(m,p)) )
+
+! Solution drawing
+ FACT:=5
+ svgsetgraphscale(FACT)
+ svgsetgraphviewbox(0,0,30,NP*FACT+5)
+ svgaddgroup("PersGraph", "Persons")
+ svgaddgroup("ProjGraph", "Projects")
+ svgaddgroup("AsgnGraph", "Assignments (preference-weighted)", SVG_GREY)
+ 
+ forall(m in RP) do
+  pos:=FACT*m
+  svgaddpoint("PersGraph", 1*FACT, pos)
+  svgaddtext("PersGraph", 1*FACT-0.02, pos-0.2, text(m))
+  svgsetstyle(svggetlastobj, SVG_TEXTANCHOR, "end")
+  a:=getsol(sum(p in RP) p*assign(m,p))
+  svgaddline("AsgnGraph", 1*FACT, pos, 3*FACT, a*FACT)
+  svgsetstyle(svggetlastobj, SVG_STROKEWIDTH, ceil(PREF(m,round(a))/2))
+ end-do
+ 
+ forall(p in RP) do
+  pos:=FACT*p
+  svgaddpoint("ProjGraph", 3*FACT, pos)
+  svgaddtext("ProjGraph", 3*FACT+0.2, pos-0.2, string(p))
+ end-do
+
+ svgsave("assign.svg")
+ svgrefresh
+ svgwaitclose("Close browser window to terminate model execution.", 1)
+end-model 
