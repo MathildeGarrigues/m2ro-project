@@ -1,0 +1,187 @@
+(!*******************************************************
+  * Mosel Example Problems                              *
+  * ======================                              *
+  *                                                     *
+  * file lscp1.mos                                      *
+  * ``````````````                                      *
+  * Example for the use of the Mosel language           *
+  * (Labour Constrained Scheduling Problem)             *
+  *                                                     *
+  * (c) 2008 Fair Isaac Corporation                     *
+  *     author: S. Heipcke, 2001, rev. Mar. 2018        *
+  *******************************************************!)
+
+model Lscp1                        ! Start a new model
+
+uses "mmxprs"                      ! Load the optimizer library
+uses "mmsystem"
+
+parameters
+ WEAKPREC = false ! false: use formulation with strong precedence constraints
+ LOADSOL = true   ! Whether to load a known feasible solution
+end-parameters
+
+declarations
+ NJ     = 25     ! Number of jobs (dummy end job is last and is counted)
+ RJ     = 1..NJ  ! Range of jobs
+ RJT    = 1..5   ! Range of job-types (includes dummy end job type)
+ RJOBL  = 1..9   ! Range of job lengths
+ TT     = 73     ! Time horizon
+ RT     = 1..TT  ! Range of time slices
+ RARCS  = 1..26  ! Range of precedence constraints
+ LABOUR = 18     ! Number of workers available per period
+
+ JT: array(RJ) of integer          ! Job-class for jobs
+ P: array(RJT) of integer          ! Processing times of job-classes
+                                   ! (must be positive)
+ TMIN: array(RJ) of integer        ! Earliest start time for jobs
+ TMAX: array(RJ) of integer        ! Latest start time for jobs
+ LABREQ: array(RJT,RJOBL) of integer ! Labour requirement per period of
+                                     ! job-type
+ ARC: array(RARCS,1..2) of integer ! Precendence constraints (TAIL(a),HEAD(a))
+ TAIL: array(RARCS) of integer     ! Tail of a precedence arc
+ HEAD: array(RARCS) of integer     ! Head of a precedence arc
+
+ HSOL: array(RJ) of integer        ! Start solution (optional)
+ KnownSol: array(mpvar) of real    ! Known solution
+
+ x: dynamic array(RT,RJ) of mpvar  ! 1 if job j starts at time t, else 0
+ st: array(RJ) of mpvar            ! Start times of jobs
+ Makespan: linctr                  ! Objective function
+end-declarations
+ 
+ JT:: [1,1,1,1,1,1,1,2,2,2,2,3,3,3,4,4,4,4,4,4,4,4,4,4,5]
+ P::  [7,9,8,5] 
+ TMIN:: [1,8,15,22,29,36,43, 
+         1,10,19,28, 
+         1,9,17, 
+         9,14,19,24,29,34,39,44,49,54, 
+         59]
+ TMAX:: [23,30,37,44,51,58,65, 
+         36,45,54,63, 
+         14,29,44, 
+         22,27,32,37,42,47,52,57,62,67, 
+         72]
+ LABREQ:: [12,12,6,2,2,2,2,0,0,
+           12,12,6,2,2,2,2,2,2,
+           12,12,3,3,3,3,3,3,0,
+           6,6,6,3,3]
+ ARC:: [1,2,
+        2,3,
+        3,4,
+        4,5,
+        5,6,
+        6,7,
+        8,9,
+        9,10,
+        10,11,
+        12,13,
+        13,14,
+        15,16,
+        16,17,
+        17,18,
+        18,19,
+        19,20,
+        20,21,
+        21,22,
+        22,23,
+        23,24,
+        12,15,
+        13,18,
+        14,21,
+        7,25,
+        11,25,
+        24,25]
+ HSOL:: [ 3,10,22,32,39,47,57, 
+          5,17,42,52, 
+	  8,20,28, 
+	 16,24,29,34,39,44,49,54,59,64,
+	 69]
+
+ forall(a in RARCS) do
+  TAIL(a):=ARC(a,1)
+  HEAD(a):=ARC(a,2)
+ end-do   
+
+                                   ! Create the variables
+ forall(t in RT,j in RJ | t>=TMIN(j) and t<= TMAX(j))
+  create(x(t,j))
+
+                                   ! Link s_j variables with x_jt variables
+ forall(j in RJ) Link(j):= st(j) = sum(t in RT|exists(x(t,j))) t * x(t,j)
+
+                                   ! Each job has to start exactly once
+ forall(j in RJ) Start(j):= sum(t in RT|exists(x(t,j))) x(t,j) = 1
+
+                                   ! Labour capacity constraints
+ forall(t in RT) Labour(t):= sum(i in 1..NJ-1,u in 1..P(JT(i)) | 
+   t-u+1>=1 and t-u+1<=TT) LABREQ(JT(i),u) * x(t-u+1,i) <= LABOUR
+
+ if (WEAKPREC) then                ! Weak precedence constraints
+  forall(a in RARCS) WPrec(a):= st(HEAD(a)) >= st(TAIL(a)) + P(JT(TAIL(a)))
+ else                              ! Strong precedence constraints
+  forall(a in RARCS, t in TMIN(HEAD(a))..minlist(TMAX(HEAD(a)),TT) |
+    t-P(JT(TAIL(a))) >= TMIN(TAIL(a)) and t-P(JT(TAIL(a))) <= TMAX(TAIL(a)))
+      SPrec(a,t):= sum(s in 1..t) x(s,HEAD(a)) <=
+        sum(s in 1..t-P(JT(TAIL(a)))) x(s,TAIL(a))
+ end-if
+ 
+ forall(t in RT,j in RJ|exists(x(t,j)))
+  x(t,j) is_binary                 ! Variables x are 0/1
+  
+! Objective function: minimize the start time of the final (dummy) job
+! (it can only start once all other jobs are complete).
+ Makespan:=st(NJ)
+
+! Display solver log
+ setparam("XPRS_verbose", true)
+
+! We know that there are only integer solutions to this problem given that all
+! coefficients are integers
+ setparam("XPRS_MIPADDCUTOFF", -0.999)
+
+! Stop once a second solution is found
+! setparam("XPRS_MAXMIPSOL", 2)
+
+! Load a known MIP solution
+ if LOADSOL then
+  loadprob(Makespan)
+  forall(j in RJ) KnownSol(x(HSOL(j),j)):=1
+  addmipsol("InitSol", KnownSol)
+ end-if
+
+! Solve the problem
+ minimize(Makespan)
+                                   ! Print out the solution
+ writeln("Solution:\n Objective: ", getobjval)
+
+ forall(j in 1..NJ-1) do
+  write(" start(", j,"): ", st(j).sol)
+  if JT(j)<JT(j+1) then writeln; end-if
+ end-do
+
+ writeln("Resource use per time interval:")
+ writeln("Capacity: ", text("#")*LABOUR)
+ forall(t in 1..round(getobjval))
+  writeln(strfmt(t,8), ": ", round(Labour(t).act) * text("*"))
+
+end-model
+
+
+This labour constrained scheduling problem is a simplification
+of a practical problem arising in chemical industry. Jobs are 
+subject to precedence constraints and have specified processing times. 
+Moreover, for each job the labour requirement varies as the job is 
+processed. Given the amount of labour available in each period, the 
+problem is to finish all the jobs as soon as possible, that is, to 
+minimize the makespan, subject to the precedence and labour constraints. 
+
+An instance of LCSP is determined by a set N={1,...,n} of jobs, the 
+processing time P(j) and labour profile L[j,1], ..., L[j,p(j)] of each 
+job j in N, and a digraph D=(N,A) representing the precedence 
+constraints between jobs. An amount L of labour is available in each 
+period.
+
+Furthermore, in the particular instance considered here the jobs are 
+grouped into job types with similar processing times and labour 
+requirements.
