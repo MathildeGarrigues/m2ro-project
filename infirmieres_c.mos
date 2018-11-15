@@ -1,0 +1,43 @@
+model infirmieres 
+	!avec heures sup
+uses "mmxprs"; !gain access to the Xpress-Optimizer solver
+
+declarations
+TRANCHES = 0..11
+B : array(TRANCHES) of real
+X : array(TRANCHES) of mpvar
+D : real
+S : array(TRANCHES) of mpvar
+end-declarations
+
+B :: [35,40,40,35,30,30,35,30,20,15,15,15]
+D := 80
+
+Minval := sum(i in TRANCHES) S(i)
+
+forall(i in TRANCHES)
+  S(i mod 12) + X((i+1) mod 12) + X((i+2) mod 12) + X((i+4) mod 12) + X((i+5) mod 12) >= B((i+5) mod 12)
+  
+  
+
+forall(i in TRANCHES) X(i) is_integer
+forall(i in TRANCHES) S(i) is_integer
+
+forall(i in TRANCHES) S(i) <= X(i)
+sum(i in TRANCHES)X(i) <= D
+
+minimize(Minval)
+
+forall(i in TRANCHES) do
+  writeln(" S(",i,") : ",getsol(S(i)))
+end-do
+
+forall(i in TRANCHES) do
+  writeln("X(",i,") :", getsol(X(i)))
+end-do
+
+writeln
+writeln(" total heures sup : ", getsol(sum(i in TRANCHES) S(i)))
+writeln(" nombre infirmieres : ", getsol(sum(i in TRANCHES) X(i)))
+
+end-model
