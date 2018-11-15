@@ -1,0 +1,150 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file timetable.mos
+   ``````````````````
+   TYPE:         Timetabling problem
+   DIFFICULTY:   2
+   FEATURES:     MIP problem, many specific constraints, tricky (pseudo-)
+                 objective function, `finalize'
+   DESCRIPTION:  We want to establish the weekly timetable for two classes of 
+                 a college. The two classes have the same teachers, except 
+                 for mathematics and sport. All lessons have a duration of 
+                 two hours. All students of the same class attend exactly 
+                 the same courses. Every class may only have one two-hour 
+                 lesson per subject on a single day. Some teachers are only
+                 available on certain days. Some time slots are reserved
+                 for certain subjects.     
+   FURTHER INFO: `Applications of optimization with Xpress-MP', 
+                 Section 14.3 `Establishing a college timetable' 
+   
+   (c) 2008 Fair Isaac Corporation
+       author: S. Heipcke, 2002, rev. Sep. 2017
+*******************************************************!)
+
+model "School timetable"
+ uses "mmxprs", "mmsvg"
+
+ declarations
+  TEACHERS: set of string         ! Set of teachers
+  CLASS = 1..2                    ! Set of classes
+  NP = 4                          ! Number of time periods for courses
+  ND = 5                          ! Days per week
+  SLOTS=1..NP*ND                  ! Set of time slots for the entire week
+  
+  COURSE: array(TEACHERS,CLASS) of integer ! Lessons per teacher and class
+ end-declarations
+
+ initializations from 'timetable.dat'
+  COURSE
+ end-initializations
+
+ finalize(TEACHERS)
+
+ declarations
+  teach: array(TEACHERS,CLASS,SLOTS) of mpvar 
+                                  ! teach(t,c,l) = 1 if teacher t gives a
+                                  ! lesson to class c during time period l
+ end-declarations
+
+! Objective: number of "holes" in the class timetables
+ Hole:= 
+  sum(t in TEACHERS, c in CLASS, d in 0..ND-1) (teach(t,c,d*NP+1) + 
+      teach(t,c,(d+1)*NP))
+
+! Plan all courses
+ forall(t in TEACHERS, c in CLASS) 
+  PlanAll(t,c):= sum(l in SLOTS) teach(t,c,l) = COURSE(t,c)
+
+! For every class, one course at a time
+ forall(c in CLASS, l in SLOTS) 
+  OneCourseClass(c,l):= sum(t in TEACHERS) teach(t,c,l) <= 1
+
+! Teacher teaches one course at a time
+ forall(t in TEACHERS, l in SLOTS) 
+  OneCourseTeacher(t,l):= sum(c in CLASS) teach(t,c,l) <= 1
+
+! Every subject only once per day
+ forall(t in TEACHERS, c in CLASS, d in 0..ND-1) 
+  OncePerDay(t,c,d):= sum(l in d*NP+1..(d+1)*NP) teach(t,c,l) <= 1
+ 
+! Sport Thursday afternoon (slot 15)
+ teach("Mr Muscle",1,15) = 1
+ teach("Mrs Biceps",2,15) = 1
+ 
+! No course during first period of Monday morning
+ forall(t in TEACHERS, c in CLASS) teach(t,c,1) = 0
+
+! No course by Mr Effofecks Monday morning
+ forall(l in 1..2) teach("Mr Effofecks",2,l) = 0
+ 
+! No Biology on Wednesday
+ forall(c in CLASS, l in 2*NP+1..3*NP) teach("Mrs Insulin",c,l) = 0 
+
+ forall(t in TEACHERS, c in CLASS, l in SLOTS) teach(t,c,l) is_binary
+ 
+! Solve the problem
+ minimize(Hole)
+ 
+! Solution printing
+ declarations
+  DAYS=1..ND
+  NAMES: array(DAYS) of string
+ end-declarations
+ 
+ initializations from 'timetable.dat'
+  NAMES
+ end-initializations
+
+ writeln("Courses at begin or end of day: ", getobjval)
+ forall(c in CLASS) do
+  writeln("Class ",c)
+  forall(d in DAYS) do
+   write(NAMES(d), ":  ")
+   forall(l in (d-1)*NP+1..d*NP)
+    if (getsol(sum(t in TEACHERS) teach(t,c,l))>0) then
+     forall(t in TEACHERS)
+      write( if(getsol(teach(t,c,l))>0, strfmt(t,-14), ""))
+    else
+     write(strfmt("",14))
+    end-if     
+   writeln 
+  end-do
+ end-do 
+
+! Solution drawing
+ forall(t in TEACHERS) do
+   svgaddgroup(t,t)
+   svgsetstyle(SVG_FILL,SVG_CURRENT)
+   svgsetstyle(SVG_STROKE,SVG_GREY)
+ end-do
+ svgaddgroup("msg","text",SVG_BLACK)
+
+ pos:=CLASS.size*NP+5
+ svgsetgraphviewbox(0,0,ND*2+2,pos+2)
+ svgsetgraphscale(20)
+
+ forall(c in CLASS) do
+  svgaddtext("msg", 0, pos, "Class "+c)
+  svgsetstyle(svggetlastobj, SVG_FONTWEIGHT, "bold")
+  pos-=1
+  forall(d in DAYS) do
+   svgaddtext("msg", d*2+1,pos+0.2,NAMES(d))
+   svgsetstyle(svggetlastobj,SVG_TEXTANCHOR,"middle")
+   forall(l in (d-1)*NP+1..d*NP) do
+    if d=1 then svgaddtext("msg", 0,pos+0.2-(l-(d-1)*NP),"Slot "+l); end-if
+    if (getsol(sum(t in TEACHERS) teach(t,c,l))>0) then
+     forall(t in TEACHERS | getsol(teach(t,c,l))>0)
+       svgaddrectangle(t, d*2, pos-(l-(d-1)*NP), 2, 1)
+    end-if
+   end-do
+  end-do
+  pos-=(NP+1)
+ end-do 
+
+ svgsave("timetable.svg")
+ svgrefresh
+ svgwaitclose("Close browser window to terminate model execution.", 1)
+end-model
+
