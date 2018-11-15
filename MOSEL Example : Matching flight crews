@@ -1,0 +1,147 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file matching.mos
+   `````````````````
+   TYPE:         Bipartite matching
+   DIFFICULTY:   4
+   FEATURES:     2 MIP problems with different objectives, data preprocessing,
+                 incremental definition of data array, encoding of arcs, 
+                 logical `or' (cumulative version) and `and', `procedure' 
+                 for printing solution, `forall-do', `max', `finalize',
+                 graphical representation of results, `sin', `cos'
+   DESCRIPTION:  The task is to form pilot/co-pilot pairs (`crews') for every 
+                 plane with a compatible language and a sufficiently good 
+                 knowledge of the aircraft type. In the first optimization 
+                 run we maximize the number of crews that fly. The
+                 second objective is to determine the set of crews with 
+                 maximum total score (best matching pilot/co-pilot pairs).    
+   FURTHER INFO: `Applications of optimization with Xpress-MP', 
+                 Section 11.2 `Composing flight crews'
+   
+   (c) 2008 Fair Isaac Corporation
+       author: S. Heipcke, 2002, rev. Sep. 2017
+*******************************************************!)
+
+model "Flight crews"
+ uses "mmxprs", "mmsvg"
+
+ forward procedure print_sol
+ forward procedure draw_sol
+
+ declarations
+  NP = 8                             ! Number of pilots
+  PILOTS = 1..NP                     ! Set of pilots
+  ARCS: range                        ! Set of arcs representing crews
+  RL, RT: set of string              ! Sets of languages and plane types
+
+  LANG: array(RL,PILOTS) of integer  ! Language skills of pilots
+  PTYPE: array(RT,PILOTS) of integer ! Flying skills of pilots
+  CREW: array(ARCS,1..2) of integer  ! Possible crews
+ end-declarations
+
+ initializations from 'matching.dat'
+  LANG PTYPE
+ end-initializations
+
+! Calculate the possible crews
+ ct:=1
+ forall(p,q in PILOTS| p<q and 
+                      (or(l in RL) (LANG(l,p)>=10 and LANG(l,q)>=10)) and
+                      (or(t in RT) (PTYPE(t,p)>=10 and PTYPE(t,q)>=10)) ) do
+  CREW(ct,1):=p
+  CREW(ct,2):=q
+  ct+=1
+ end-do
+
+ finalize(ARCS)
+ 
+ declarations
+  fly: array(ARCS) of mpvar           ! 1 if crew is flying, 0 otherwise
+ end-declarations 
+ 
+! First objective: number of pilots flying
+ NFlying:= sum(a in ARCS) fly(a)
+
+! Every pilot is member of at most a single crew
+ forall(r in PILOTS) 
+  OneCrew(r):= sum(a in ARCS | CREW(a,1)=r or CREW(a,2)=r) fly(a) <= 1
+
+ forall(a in ARCS) fly(a) is_binary
+ 
+! Solve the problem
+ maximize(NFlying)
+ 
+! Solution printing
+ writeln("Number of crews: ", getobjval)
+ print_sol
+
+! **** Extend the problem ****
+ declarations
+  SCORE: array(ARCS) of integer       ! Maximum scores of crews
+ end-declarations 
+
+ forall(a in ARCS)
+  SCORE(a):= max(t in RT | PTYPE(t,CREW(a,1))>=10 and PTYPE(t,CREW(a,2))>=10) 
+               (PTYPE(t,CREW(a,1)) + PTYPE(t,CREW(a,2)))
+
+! Second objective: sum of scores
+ TotalScore:= sum(a in ARCS) SCORE(a)*fly(a)
+
+! Solve the problem
+ maximize(TotalScore)
+
+ writeln("Maximum total score: ", getobjval)
+ print_sol
+ draw_sol
+ 
+!-----------------------------------------------------------------
+
+! Solution printing
+ procedure print_sol
+  forall(a in ARCS)
+   if(getsol(fly(a))>0) then
+    writeln(CREW(a,1),  " - ", CREW(a,2))
+   end-if
+ end-procedure  
+
+! Solution drawing
+ procedure draw_sol
+  declarations
+   X,Y: array(PILOTS) of real
+  end-declarations
+  
+  forall(p in PILOTS) do
+   X(p):= 20+cos(p*2*M_PI/NP)*10
+   Y(p):= 20+sin(p*2*M_PI/NP)*10
+  end-do
+  
+  svgsetgraphviewbox(0,0,35,35)
+  svgsetgraphscale(5)
+  svgaddgroup("PersGraph", "Pilots")
+  svgaddgroup("ArcGraph", "Possible matches", svgcolor(150,150,150))
+  svgaddgroup("AsgnGraph", "Crews")
+ 
+  forall(p in PILOTS) do
+   svgaddpoint("PersGraph", X(p), Y(p))
+   svgaddtext("PersGraph", X(p)+0.5, Y(p), string(p))
+  end-do
+  
+  forall(a in ARCS)
+   if(getsol(fly(a))>0) then
+    svgaddline("AsgnGraph", X(CREW(a,1)), Y(CREW(a,1)), 
+                           X(CREW(a,2)), Y(CREW(a,2)))
+    svgaddtext("AsgnGraph", (X(CREW(a,1))+X(CREW(a,2)))/2,
+                            (Y(CREW(a,1))+Y(CREW(a,2)))/2, string(SCORE(a)))
+   else
+    svgaddline("ArcGraph", X(CREW(a,1)), Y(CREW(a,1)), 
+                          X(CREW(a,2)), Y(CREW(a,2)))
+   end-if
+  
+  svgsave("matching.svg")
+  svgrefresh
+  svgwaitclose("Close browser window to terminate model execution.", 1)
+ end-procedure
+   
+end-model
