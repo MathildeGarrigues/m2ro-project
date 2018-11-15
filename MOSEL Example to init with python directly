@@ -1,0 +1,56 @@
+(!******************************************************
+   Mosel Python Example Problems
+   =============================
+
+   file init_set_from_py.mos
+   `````````````````````````
+   Initialize Mosel sets from iterable Python objects.
+
+  (c) 2018 Fair Isaac Corporation
+      author: J.Müller
+*******************************************************!)
+model 'init_set_from_py'
+    options noimplicit
+
+    uses 'python3'
+
+    ! Example how to add items from Python iterator to Mosel sets.
+    procedure example_mosel_set_from_python
+        declarations
+            setOfInt: set of integer
+            setOfStr: set of string
+            setOfSetOfStr: set of set of string
+            setFromGenerator, setFromGeneratorExpr, setFromIterableObj: set of integer
+        end-declarations
+
+        writeln("Import class definitions and function definitions from Python script...\n")
+        pyrun('init_set_from_py.py')
+
+        writeln("Execute imported function...\n")
+        pyexec('mosel_set_add_from_py_iterator()')
+
+        writeln("\nInit from Python...\n")
+
+        ! The following initializations are supposed to succeed.
+        initialisations from PY_IO_GLOBAL_VAR
+            setOfInt
+            setOfStr
+            setOfSetOfStr
+            setFromGenerator
+            setFromGeneratorExpr
+            setFromIterableObj
+        end-initialisations
+
+        writeln("\nValues in Mosel:")
+        writeln("setOfInt             = ", setOfInt)
+        writeln("setOfStr             = ", setOfStr)
+        writeln("setOfSetOfStr        = ", setOfSetOfStr)
+        writeln("setFromGenerator     = ", setFromGenerator)
+        writeln("setFromGeneratorExpr = ", setFromGeneratorExpr)
+        writeln("setFromIterableObj   = ", setFromIterableObj)
+    end-procedure
+
+    example_mosel_set_from_python
+    writeln("Finished without errors.")
+end-model
+
