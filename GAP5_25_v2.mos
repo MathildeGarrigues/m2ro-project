@@ -1,0 +1,78 @@
+!@encoding CP1252
+model GAP
+uses "mmxprs"; !gain access to the Xpress-Optimizer solver
+
+declarations
+  m,n: integer
+  M=1..5
+  N=1..25
+  NP1=1..26
+  NP2=1..27
+  L0,LNP1: integer  !!!!!!!!!!!! time   !!! choice: same for all gates (so far)
+  A,D: array(N) of integer      !!!!!!!!!!!!!!!!!!!!! time
+  P: array(N,M) of integer
+end-declarations    
+   
+initializations from 'GAP5_25.dat'
+	n m L0 LNP1 A D P
+end-initializations
+   
+!!!!!!!!!!!!!!!!   
+declarations    
+  G: array(N) of integer
+  X: dynamic array(N,M) of mpvar
+  E: dynamic array(N,M) of integer
+  L: dynamic array(NP2,M) of integer
+  S: dynamic array(NP1,M) of integer
+end-declarations
+
+! Initialisations of variables
+!forall(j in N, k in M) create(E(j,k))
+!forall(j in NP2, k in M) create(L(j,k))
+!forall(j in NP1, k in M) create(S(j,k))
+forall(k in M) do 									! Initialize Gates earliest and latest available times
+	L(1,k) := L0
+	L(n+2,k) := LNP1
+end-do
+forall(j in N) G(j) := D(j) - A(j)
+
+! Objective function : minimize the variance of idle times
+z := sum(k in M)( sum(j in NP1)( S(j,k)*S(j,k))) ! = S(j,k)^2 
+
+! Constraints
+forall(j in N) Cnstr2(j) := sum(k in M) P(j,k)*X(j,k) = 1                    ! Constraint 2 : A flight j should be assigned at most (and at least) to one gate.
+
+forall(j in N, k in M) Cnstr3(j,k) :=  E(j,k) >= A(j)*X(j,k)         ! Constraint 3
+
+forall(j in N, k in M) Cnstr4(j,k) := E(j,k) >= L(j,k)              ! Constraint 4
+
+forall(j in N, k in M) Cnstr5(j,k) := L(j+1,k) = E(j,k) + G(j)*X(j,k) ! Constraint 5
+
+forall(j in N, k in M) Cnstr6(j,k) := S(j,k) = E(j,k) - L(j,k)      ! Constraint 6
+
+forall(k in M) Cnstr7(k) := S(n+1,k) = L(n+2,k) - L(n+1,k)        ! Constraint 7
+!forall(j in N, k in M) X(j,k) is_binary              ! Constraint 8
+
+forall(j in N, k in M) Cnstr9(j,k) := E(j,k) >= 0                   ! Constraint 9					 
+
+forall(j in NP1, k in M) Cnstr10(j,k) := L(j,k) >= 0
+
+forall(j in N, k in M) Cnstr11(j,k) := S(j,k) >= 0
+
+forall(k in M) Cnstr12(k) := S(n+1,k) >= 0
+	
+! Solve the problem
+minimize(z)
+
+! Solution printing
+writeln("Variance score: ", getobjval)
+forall(i in N) do
+ writeln("Flight ", i, ": gate ")
+ forall(j in M) do
+  if (getsol(X(i,j))=1) then write(j)
+  end-if
+ end-do
+end-do
+ 
+writeln("End running model")
+end-model
