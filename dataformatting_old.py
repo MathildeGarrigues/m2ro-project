@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov  6 16:42:31 2018
@@ -7,7 +7,6 @@ Created on Tue Nov  6 16:42:31 2018
 import numpy as np
 import os
 
-# This file takes as an input the filename(.txt) to convert to (.dat)
 #====== VARIABLES INITIALIZATION =====
 pb_data=dict()  #Dictionnary that contains number of flights N and gates M
 A=list()
@@ -16,17 +15,21 @@ A_m=list()
 D=list()
 D_h=list()
 D_m=list()
-L0 = 0
-LNP1 = 0
-P = np.zeros(shape=(25,5), dtype=int) # change shape of P according to N and M
+P = np.zeros(shape=(25,5), dtype=int)
 n=0
 s=0
 
 #====== Data File reading ======
-
-filename = 'GAP5_25'  
+while s==0:
+    name = input("Quel est le nom du fichier que vous souhaitez utiliser ? \n")
+    if os.path.exists(name) is False :
+        print("Le fichier n'est pas présent dans le répertoire courant")
+        s=0
+    else :
+        s+=1
+    
         
-with open(filename+'.txt', 'r') as file:
+with open(name, 'r') as file:
     allData = file.read()
 
 #====== Data formating ======    
@@ -51,7 +54,7 @@ for i in range(len(line)):
 #print(P)
 
 
-#====== Discrete time computation ======            
+#====== Discrete time ======            
 for i in range(len(A)):
     A_split = str(A[i]).split(":")
     D_split = str(D[i]).split(":")
@@ -61,41 +64,22 @@ for i in range(len(A)):
     D_m.append(D_split[1])
     A[i]= int(A_h[i])*12 + int(int(A_m[i])/5) 
     D[i]= int(D_h[i])*12 + int(int(D_m[i])/5) 
-
-L0 = int(A_h[0])*12
-LNP1 = (int(D_h[len(D)-1])+1) *12
 #print(A)
 #print(D)
 
 #====== Writing data on file GAP ======
-with open(filename+'.dat', 'w') as formated_file:
-
-    # n (flights) , m (gates) lines
+with open('GAP_test.dat', 'w') as formated_file:
+    for cle, val in pb_data.items():
+        formated_file.write(str(cle) + ": " + str(val) + "\n" )
     
-    formated_file.write("n : " + pb_data.get('Flights') + "\n" )
-    formated_file.write("m : " + pb_data.get('Gates') + "\n" )
-
-    # L0 and LNP1 lines
-    formated_file.write("L0 : " + str(L0) + "\n" )
-    formated_file.write("LNP1 : " + str(LNP1) + "\n" )	    
-
-    # A vector line
-    formated_file.write("\n A : [")
+    formated_file.write("\n FLIGHTSTIME: [")
     for n in range(len(A)):
-        formated_file.write(" (" + str(n+1) + ") " + str(A[n]) + "\n")
-    formated_file.write("] \n")
-
-    # D vector line
-    formated_file.write("\n D : [")
-    for n in range(len(D)):
-        formated_file.write(" (" + str(n+1) + ") " + str(D[n]) + "\n")
+        formated_file.write(" (" + str(n+1) + ")  [" + str(A[n]) + " " + str(D[n]) + "] \n")
     formated_file.write("] \n")
     
-    # P vector line
-    formated_file.write("\n P : [")
+    formated_file.write("\n GATESALLOWED: [")
     for n in range(P.shape[0]):
         for m in range(P.shape[1]):
             formated_file.write(" (" + str(n+1) + " " + str(m+1) + ") " + str(P[n,m]) + " ")
         formated_file.write("\n")
-
     formated_file.write("]")
