@@ -1,0 +1,95 @@
+
+model GAP5_25
+uses "mmxprs"; 			! Use Xpress optimizer for solving
+
+declarations
+  m,n: integer
+  M=1..5
+  N=1..25
+  NP1=1..26
+  NP2=1..27
+  L0,LNP1: real  !!!!!!!!!!!! time   !!! choice: same for all gates (so far)
+  
+  A,D: array(N) of real      !!!!!!!!!!!!!!!!!!!!! time
+  G: array(N) of real
+  P: dynamic array(N,M) of integer
+    
+  X: dynamic array(N,M) of mpvar
+  E: dynamic array(N,M) of mpvar
+  L: dynamic array(NP2,M) of mpvar
+  S: dynamic array(NP1,M) of mpvar
+end-declarations
+
+initializations from 'data/data/GAP5_25.dat'
+	n as 'n'	
+	m as 'm'
+	L0 as 'L0' !!!!!!!!!! choix 
+	LNP1 as 'LNP1' !!!!!!!!
+	A as 'A'
+	D as 'D'
+	P as 'P'
+end-initializations
+
+
+forall(j in N, k in M) create(X(j,k))			! Create data structures
+forall(j in N, k in M) create(E(j,k))
+forall(j in NP2, k in M) create(L(j,k))
+forall(j in NP1, k in M) create(S(j,k))
+
+forall(k in M) do 									! Initialize Gates earliest and latest available times
+	L(1,k) = L0
+	L(n+2,k) = LNP1
+end-do
+	
+forall(j in N) G(j) := D(j) - A(j)				! Compute Ground times
+
+
+forall(j in N)
+	sum(k in M) P(j,k)*X(j,k) = 1                    ! Constraint 2 : A flight j should be assigned at most (and at least) to one gate.
+
+forall(j in N, k in M) E(j,k) >= A(j)*X(j,k)         ! Constraint 3
+forall(j in N, k in M) E(j,k) >= L(j,k)              ! Constraint 4
+forall(j in N, k in M) L(j+1,k) = E(j,k) + G(j)*X(j,k) ! Constraint 5
+forall(j in N, k in M) S(j,k) = E(j,k) - L(j,k)      ! Constraint 6
+forall(k in M) S(n+1,k) = L(n+2,k) - L(n+1,k)        ! Constraint 7
+forall(j in N, k in M) X(j,k) is_binary              ! Constraint 8
+
+forall(j in N, k in M)                               ! Constraint 9
+	E(j,k) >= 0					 
+forall(j in NP1, k in M) 
+	L(j,k) >= 0
+forall(j in N, k in M) 
+	S(j,k) >= 0
+forall(k in M) 
+	S(n+1,k) >= 0
+
+
+z := sum(k in M) sum(j in NP1) S(j,k) ! = S(j,k)^2 
+
+minimize(z)								 ! Objective : minimize variance of idle times
+
+writeln("Solution : ", getsol(z))		 ! Print objective value function
+
+	 ! Print optimal assignments
+forall(k in M) do
+	writeln("Gate ",k," assignments :")	
+	forall(j in N) do
+	
+	!if(getsol(X(j,k))=1) then
+		writeln("> Flight ",j, ", X=",getsol(X(j,k)))
+	!end-if
+	end-do
+end-do
+
+! print data
+forall(j in N) writeln("Arrival ",j,": ", A(j),", Departure: ",D(j))
+forall(k in M) do
+	writeln ("Permissible assignments to Gate ",k,":")
+	forall(j in N)
+		if(P(j,k)=1) then writeln(j)
+	end-if
+end-do
+
+writeln("End running model")
+
+end-model
