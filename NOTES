@@ -1,0 +1,22 @@
+
+Contenu du rapport : 
+
+- Décrire le problème en nots mots. Décrire la formulation mathématique en mots : variables de décision, fonction objective 
+et contraintes. (voir point 1)
+- Décrire les contraintes en quelques mots. (voir points 2 et 3)
+- Décrire le code du modèle PLNE. (voir 4)
+- Montrer les résultats d'affectation (choix entre affichage sur LateX ou fichiers .txt/Excel joints).
+***(En quelques phrases avec plus de détail sur les points importants ci-dessous)
+
+Notes importantes pour le rapport:
+
+1- Expliquer le choix de la fonction d'objectif et la raison de la simplification de variance (dans l'article) et ajouter notre simplification
+  linéaire (de fonction quadratique à linéaire).
+2- Expliquer le but des contraintes 3 et 4 (équivalence au max).
+3- Expliquer notre choix des valeurs L0 (temps ouverture des portes) et LNP1 (Ln+1 : temps fermeture).   Mentionner qu'on
+  a choisi une valeur égale pour toutes les portes.
+ 
+4- Décrire le but des fichiers clés et comment les utiliser (voir GAP/README).
+5- Décrire notre représentation des valeurs de temps (voir ligne 75  dans dataformatting.py:  
+                                                                            A[i]= int(A_h[i])*12 + int(int(A_m[i])/5) ).
+ 
