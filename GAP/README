@@ -13,7 +13,7 @@ This folder contains :
 - dataformatting.py : Python file which converts .txt data files into .dat files (readable data format for MOSEL).
 
 
-To convert a .txt file into .dat, use this UNIX command :
+To convert a .txt file into .dat, use this UNIX command (where GAPX_Y.txt is the filename passed as an argument):
   python dataformatting.py GAPX_Y.txt
 
 To execute the ILP model, please make sure that the correct corresponding .dat file is used for the 2 initializations 
