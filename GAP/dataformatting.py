@@ -9,10 +9,14 @@ import sys
 
 #======== ARGUMENTS READING ======
 
-if (len(sys.argv) > 1):
-	args = sys.argv
+if(len(sys.argv) == 1):
+	print("Please enter the text filename you would like to convert:")
+
+if(len(sys.argv) > 2):
+	print("Only one text file is allowed!")
 
 if (len(sys.argv) == 2):
+	args = sys.argv
 	filename = args[1]
 #	print(filename)
 	temp = filename.replace("GAP","")
