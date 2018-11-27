@@ -15,19 +15,19 @@ declarations
   N=1..n ! Flights
   N2=2..n
   L0, LNP1 : integer   ! temps d'ouverture et fermeture des portes
-  A,D: array(N) of integer    ! A/D: vecteurs des temps d'arrivée/départ des vols
-  P: array(N,M) of integer    ! vecteur désignant les possibles portes à affecter pour chaque vol
+  A,D: array(N) of integer    ! A/D: vecteurs des temps d'arrivÃ©e/dÃ©part des vols
+  P: array(N,M) of integer    ! vecteur dÃ©signant les possibles portes Ã  affecter Ã  chaque vol
 end-declarations    
 initializations from 'GAP9_45.dat'
 	L0 LNP1 A D P
 end-initializations
 declarations    
   G: array(N) of integer         ! les temps sur sol
-  X: dynamic array(N,M) of mpvar ! variable de décision d'affectation (1:affecté 0:non affecté)
-  E: dynamic array(N,M) of mpvar ! temps d'entrée des vols aux portes
+  X: dynamic array(N,M) of mpvar ! variable de dÃ©cision d'affectation (1:affectÃ© 0:non affectÃ©)
+  E: dynamic array(N,M) of mpvar ! temps d'entrÃ©e des vols aux portes
   L: dynamic array(N,M) of mpvar ! temps de sortie des vols des portes
-  S: dynamic array(N,M) of mpvar ! temps d'inactivité des portes
-  SNP1: array (M) of integer     ! dernier temps d'inactivité de chaque porte
+  S: dynamic array(N,M) of mpvar ! temps d'inactivitÃ© des portes
+  SNP1: array (M) of integer     ! dernier temps d'inactivitÃ© de chaque porte
 end-declarations
 
 ! Initialisations of variables
@@ -39,27 +39,27 @@ forall(k in M) create(SNP1(k))
 
 forall(j in N) G(j) := D(j) - A(j)       ! calculer les temps sur sol des vols
 
-! Objective function : minimiser la variance des temps d'inactivité (dans ce cas déterministe, on simplifie la fonction à minimiser la somme d'inactivité)
+! Objective function : minimiser la variance des temps d'inactivitÃ© (dans ce cas dÃ©terministe, on simplifie la fonction Ã  minimiser la somme d'inactivitÃ©)
 z := (LNP1 - L0)*m - sum(j in N) G(j)
 
-! Contraintes (numérotation correspond à celle de l'article)
-forall(j in N) Cnstr2(j) := sum(k in M) P(j,k)*X(j,k) = 1             !C2: Un vol j doit être affecté au plus (et au moins) à une seule porte.
+! Contraintes (numÃ©rotation correspond Ã  celle de l'article)
+forall(j in N) Cnstr2(j) := sum(k in M) P(j,k)*X(j,k) = 1             !C2: Un vol j doit Ãªtre affectÃ© au plus (et au moins) Ã  une seule porte.
 
 forall(j in N, k in M) Cnstr3(j,k) :=  E(j,k) >= A(j)*X(j,k)         
 forall(j in N2, k in M) Cnstr4(j,k) := E(j,k) >= L(j-1,k)              
-forall(k in M) Cnstr4bis(k):= E(1,k) >= L0						      !C3 et C4: le temps d'entrée du vol j à la porte k est le maximum entre le temps de son arrivée 
-																	  ! (s'il est bien affecté à la porte k) et le temps de sortie du dernier vol affecté à la porte k
+forall(k in M) Cnstr4bis(k):= E(1,k) >= L0						      !C3 et C4: le temps d'entrÃ©e du vol j Ã  la porte k est le maximum entre le temps de son arrivÃ©e 
+																	  ! (s'il est bien affectÃ© Ã  la porte k) et le temps de sortie du dernier vol affectÃ© Ã  la porte k
 
-forall(j in N, k in M) Cnstr5(j,k) := L(j,k) = E(j,k) + G(j)*X(j,k)   !C5: le temps de sortie d'un vol j de la porte k est le temps de son entrée plus le temps sur sol
+forall(j in N, k in M) Cnstr5(j,k) := L(j,k) = E(j,k) + G(j)*X(j,k)   !C5: le temps de sortie d'un vol j de la porte k est le temps de son entrÃ©e plus le temps sur sol
 
 forall(j in N2, k in M) Cnstr6(j,k) := S(j,k) = E(j,k) - L(j-1,k)     
-forall(k in M) Cnstr6bis(k) := S(1,k) = E(1,k) - L0					  !C6: le temps d'inactivité de la porte k avant l'entrée du vol j est le temps entre
-																	  ! le départ du dernier vol avant j (j-1) de la porte k et le temps d'entrée de j à cette porte.
+forall(k in M) Cnstr6bis(k) := S(1,k) = E(1,k) - L0					  !C6: le temps d'inactivitÃ© de la porte k avant l'entrÃ©e du vol j est le temps entre
+																	  ! le dÃ©part du dernier vol avant j (j-1) de la porte k et le temps d'entrÃ©e de j Ã  cette porte.
 
-forall(k in M) Cnstr7(k) := SNP1(k) = LNP1 - L(n,k)                   !C7: le dernier temps d'inactivité de porte k est le temps entre le tout dernier départ de k (L(n,k)) 
+forall(k in M) Cnstr7(k) := SNP1(k) = LNP1 - L(n,k)                   !C7: le dernier temps d'inactivitÃ© de porte k est le temps entre le tout dernier dÃ©part de k (L(n,k)) 
 																	  ! et le temps de sa fermeture (LNP1).
 
-forall(j in N, k in M) Cnstr8(j,k) := X(j,k) is_binary                !C8: la variable d'affectation est binaire (X=1 vol j est affecté à porte k, X=0 non affecté)
+forall(j in N, k in M) Cnstr8(j,k) := X(j,k) is_binary                !C8: la variable d'affectation est binaire (X=1 vol j est affectÃ© Ã  porte k, X=0 non affectÃ©)
 
 forall(j in N, k in M) Cnstr9(j,k) := E(j,k) >= 0                   					 
 
@@ -73,7 +73,7 @@ forall(k in M) Cnstr12(k) := SNP1(k) >= 0							  !C9 C10 C11 C12: les temps son
 minimize(z)
 
 ! Print solution
-writeln("Total idle time S=",getsol(z))
+writeln("Total idle time: ",getsol(z))
 
 ! Printing assignments
 forall(k in M) do
