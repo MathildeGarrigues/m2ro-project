@@ -1,0 +1,100 @@
+Total idle time: 390
+
+Gate 1:
+L0=96
+Flight 4, E=117 L=130 G=13
+Flight 12, E=133 L=165 G=32
+Flight 17, E=165 L=178 G=13
+Flight 21, E=178 L=188 G=10
+Flight 32, E=201 L=216 G=15
+LN+1=216
+
+Gate 2:
+L0=96
+Flight 8, E=120 L=139 G=19
+Flight 9, E=139 L=161 G=22
+Flight 10, E=161 L=176 G=15
+Flight 24, E=176 L=186 G=10
+Flight 31, E=186 L=201 G=15
+Flight 34, E=201 L=216 G=15
+LN+1=216
+
+Gate 3:
+L0=96
+Flight 23, E=158 L=171 G=13
+Flight 25, E=171 L=179 G=8
+Flight 36, E=199 L=216 G=17
+LN+1=216
+
+Gate 4:
+L0=96
+Flight 7, E=120 L=131 G=11
+Flight 11, E=148 L=157 G=9
+Flight 16, E=157 L=171 G=14
+Flight 27, E=171 L=183 G=12
+Flight 33, E=183 L=198 G=15
+Flight 37, E=198 L=211 G=13
+LN+1=216
+
+Gate 5:
+L0=96
+Flight 1, E=107 L=121 G=14
+Flight 5, E=121 L=147 G=26
+Flight 6, E=147 L=160 G=13
+Flight 15, E=161 L=175 G=14
+Flight 26, E=175 L=189 G=14
+Flight 29, E=189 L=216 G=27
+LN+1=216
+
+Gate 6:
+L0=96
+Flight 2, E=115 L=127 G=12
+Flight 3, E=127 L=142 G=15
+Flight 18, E=149 L=163 G=14
+Flight 22, E=163 L=176 G=13
+Flight 28, E=176 L=197 G=21
+Flight 30, E=197 L=211 G=14
+LN+1=216
+
+Gate 7:
+L0=96
+Flight 13, E=158 L=171 G=13
+Flight 14, E=171 L=184 G=13
+Flight 19, E=184 L=191 G=7
+Flight 20, E=191 L=203 G=12
+Flight 38, E=203 L=216 G=13
+LN+1=216
+
+Gate 8:
+L0=96
+Flight 35, E=192 L=204 G=12
+Flight 39, E=204 L=216 G=12
+LN+1=216
+Gate 7:
+L0=96
+Flight 6, E=118 L=131 G=13
+Flight 10, E=131 L=146 G=15
+Flight 24, E=155 L=175 G=20
+Flight 28, E=175 L=185 G=10
+Flight 34, E=185 L=202 G=17
+Flight 45, E=202 L=216 G=14
+LN+1=216
+
+Gate 8:
+L0=96
+Flight 3, E=129 L=141 G=12
+Flight 16, E=141 L=156 G=15
+Flight 20, E=156 L=176 G=20
+Flight 36, E=176 L=190 G=14
+Flight 38, E=198 L=216 G=18
+LN+1=216
+
+Gate 9:
+L0=96
+Flight 18, E=148 L=161 G=13
+Flight 23, E=161 L=173 G=12
+Flight 26, E=173 L=186 G=13
+Flight 30, E=186 L=198 G=12
+Flight 41, E=203 L=216 G=13
+LN+1=216
+

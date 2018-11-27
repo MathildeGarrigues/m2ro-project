@@ -1,0 +1,58 @@
+Total idle time: 230
+
+Gate 1:
+L0=96
+Flight 1, E=100 L=129 G=29
+Flight 5, E=129 L=142 G=13
+Flight 10, E=142 L=159 G=17
+Flight 17, E=166 L=173 G=7
+Flight 20, E=173 L=187 G=14
+Flight 26, E=187 L=202 G=15
+Flight 31, E=202 L=216 G=14
+LN+1=216
+
+Gate 2:
+L0=96
+Flight 6, E=119 L=134 G=15
+Flight 12, E=152 L=172 G=20
+Flight 19, E=172 L=185 G=13
+Flight 25, E=185 L=204 G=19
+Flight 33, E=204 L=216 G=12
+LN+1=216
+
+Gate 3:
+L0=96
+Flight 11, E=143 L=156 G=13
+Flight 13, E=156 L=170 G=14
+Flight 22, E=170 L=191 G=21
+Flight 28, E=191 L=203 G=12
+Flight 29, E=203 L=216 G=13
+LN+1=216
+
+Gate 4:
+L0=96
+Flight 4, E=128 L=140 G=12
+Flight 9, E=140 L=149 G=9
+Flight 14, E=149 L=168 G=19
+Flight 15, E=168 L=181 G=13
+Flight 16, E=181 L=201 G=20
+Flight 30, E=201 L=216 G=15
+LN+1=216
+
+Gate 5:
+L0=96
+Flight 2, E=107 L=121 G=14
+Flight 3, E=121 L=134 G=13
+Flight 8, E=134 L=149 G=15
+Flight 21, E=174 L=184 G=10
+Flight 23, E=184 L=199 G=15
+Flight 27, E=199 L=216 G=17
+LN+1=216
+
+Gate 6:
+L0=96
+Flight 7, E=123 L=137 G=14
+Flight 18, E=173 L=186 G=13
+Flight 24, E=186 L=203 G=17
+Flight 32, E=203 L=216 G=13
+LN+1=216
