@@ -11,6 +11,10 @@ This folder contains :
 - GAPv3.mos : the ILP model to solve GAP problem written in MOSEL language.
 - GAPX_Y.dat     : data files to load in .mos file (for different instances of the problem with X gates and Y flights).
 - dataformatting.py : Python file which converts .txt data files into .dat files (readable data format for MOSEL).
+- txt folder: containing the .txt files to convert to .dat.
+- Results folder containing :
+    * GAPX_Y_results.txt files: the assignments results for the problems from GAP5_Y to GAP9_Y.
+    * results_table.xlsx: an Excel table with the comparison of the objectif values.
 
 
 To convert a .txt file into .dat, use this UNIX command (where GAPX_Y.txt is the filename passed as an argument):
